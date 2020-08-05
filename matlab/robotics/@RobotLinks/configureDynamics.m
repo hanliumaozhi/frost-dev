@@ -17,6 +17,14 @@ function obj = configureDynamics(obj, varargin)
         omit_set = false;
     end
     
+    if isfield(opts, 'SpringForceSet')
+        spring_force_fn = opts.SpringForceSet;
+        spring_force_en = true;
+    else
+        spring_force_fn = false;
+        spring_force_en = false;
+    end
+    
     
     n_link = length(obj.Links);
     links = getTwists(obj.Links);
@@ -119,7 +127,16 @@ function obj = configureDynamics(obj, varargin)
         fprintf('Evaluating the gravity vector G(q): \t');
         Ge = SymFunction(['Ge_vec_',obj.Name],-eval_math_fun('GravityVector',[links,{Qe}]),{Qe,dQe});
         toc
-        vf = [Ce1;Ce2;Ce3;{Ge}];
+        
+        if spring_force_en
+            tic
+            fprintf('Evaluating the spring vector S(q): \t');
+            Sf = spring_force_fn;
+            toc
+            vf = [Ce1;Ce2;Ce3;{Ge};{Sf}];
+        else
+            vf = [Ce1;Ce2;Ce3;{Ge}];
+        end
     end
     
     obj.setDriftVector(vf);
